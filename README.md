@@ -10,6 +10,7 @@ Requires the following CPAN modules:
 
 ##Configuration
 To use, enter your api key and client-id in a config file in the following format, and save it as DigitalOcean.conf:
+```
 ClientID  The_client_key_from_DigitalOcean
 APIKey    YourDigitaloceanApiKey
-
+```
