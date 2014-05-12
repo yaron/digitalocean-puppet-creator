@@ -9,8 +9,4 @@ Requires the following CPAN modules:
 * [DigitalOcean](http://search.cpan.org/~srchulo/DigitalOcean-0.09/)
 
 ##Configuration
-To use, enter your api key and client-id in a config file in the following format, and save it as DigitalOcean.conf:
-```
-ClientID  The_client_key_from_DigitalOcean
-APIKey    YourDigitaloceanApiKey
-```
+To use the script, copy DigitalOcean.example.conf to DigitalOcean.conf and change the settings to your preference.

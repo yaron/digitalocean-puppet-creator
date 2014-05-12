@@ -19,7 +19,8 @@ sub new {
 }
 sub create_droplet {
   my( $self, $name, $wait ) = @_;
-print $name;
+
+#@TODO load config from a file if possible, otherwise ask user.
   return $self->{_do}->create_droplet(
     name => $name,
     size_id => $self->choose_option("sizes", "Size")->id,
@@ -44,7 +45,7 @@ sub get_by_name {
 sub choose_option {
   my ($self, $type, $type_human) = @_;
   my $objects = $self->{_do}->$type;
-  print "Please choose a(n) " . $type_human . "\n";
+  print "Please choose a(n) " . $type_human . ".\n";
   for my $object (@{$objects}) {
     print $object->id . "). " . $object->name . "\n";
   }

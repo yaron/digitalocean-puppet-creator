@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use Local::DigitalOcean;
-use Local::SSH;
+use Local::Puppet;
 
 print "Please choose an action to perform.\n";
 print "1). Create a puppet master.\n";
@@ -15,37 +15,25 @@ if ($action != 1 && $action != 2 && $action != 3) {
 my $do = new Local::DigitalOcean();
 
 if ($action == 1 || $action == 2) {
-  my $master_domain = userInput("Enter the domain to put the new droplet(s) under (should already exist on the dns tab in digitalocean).");
+  print "The new droplets will be created under one domain. ";
+  $master_domain = $do->choose_option("domains", "Domain");
 }
 
 if ($action == 1) {
   my $droplet_name = userInput("What should the new droplet be called? Only valid hostname characters are allowed. (a-z, A-Z, 0-9, . and -).");
   $droplet_name =~ s/^\s+|\s+$//g;
   $master = $do->create_droplet($droplet_name, 1);
-  $domain = $do->get_by_name("domains", $master_domain);
   # Fetch the master again, because the droplet we got does not
   # contain an ip address.
   $master = $do->get_by_name("droplets", $master->name);
-  $domain->create_record(
+  $master_domain->create_record(
     record_type => 'A',
     data => $master->ip_address,
     name => $master->name,
   );
   print "Created A record for " . $master->name . "\n";
-  $ssh = new Local::SSH($master->ip_address, identity_files => ["/home/yaron/.ssh/id_rsa.pub"]);
-  $ssh->install_deb_package("https://apt.puppetlabs.com/puppetlabs-release-" . $ssh->getVersionName() . ".deb");
-  $ssh->install_package("puppetmaster-passenger");
-  # install puppet-dashboard
-  #edit /etc/puppet-dashboard/database.yml
-  #mysql-server (inc. root user pass)
-  #create dashboard mysql user and database
-  #edit /etc/mysql/my.cnf max_allowed_packet = 32M
-  #restart mysql
-  #cd /usr/share/puppet-dashboard  && rake RAILS_ENV=production db:migrate
-  # create htpasswd file in /etc/apache2/passwords
-  # scp ./puppet-dashboard.conf /etc/apache2/sites-available/puppet-dashboard (replace --puppet-master-domain-- with FQDN)
-  #a2ensite puppet-dashboard
-  #service apache2 reload
+  $puppet = new Local::Puppet($master);
+  $puppet->make_master();
 }
 
 if ($action == 2) {
@@ -55,32 +43,29 @@ if ($action == 2) {
     my $last = ($i == ($number_puppets - 1));
     my $droplet_name = userInput("What should the new droplet (number " . $i . ") be called? Only valid hostname characters are allowed. (a-z, A-Z, 0-9, . and -)");
     $droplet_name =~ s/^\s+|\s+$//g;
-    $puppets[$i] = $do->create_droplet($droplet_name, $last);
+    $puppets[$i] = $do->get_by_name("droplets", $droplet_name);
+    #$puppets[$i] = $do->create_droplet($droplet_name, $last);
     print "Created " . $droplet_name . "\n";
   }
 
-  $domain = $do->get_by_name("domains", $master_domain);
   for my $puppet (@puppets) {
     # Fetch the puppet again, because the droplets we got do not
     # contain an ip address.
     $puppet = $do->get_by_name("droplets", $puppet->name);
-    $domain->create_record(
+    $master_domain->create_record(
       record_type => 'A',
       data => $puppet->ip_address,
       name => $puppet->name,
     );
     print "Created A record for " . $puppet->name . "\n";
-    $ssh = new Local::SSH($puppet->ip_address, identity_files => ["/home/yaron/.ssh/id_rsa.pub"]);
-    $ssh->install_deb_package("https://apt.puppetlabs.com/puppetlabs-release-" . $ssh->getVersionName() . ".deb");
-    $ssh->install_package("puppet");
+    $puppet = new Local::Puppet($puppet);
+    $puppet->make_puppet();
   }
 }
 
 
 if ($action == 3) {
-  
-  $droplet_id = $do->choose_option("droplets", "Droplet");
-  $droplet = $do->{_do}->droplet($droplet_id);
+  $droplet = $do->choose_option("droplets", "Droplet");
   $droplet->destroy();
 }
 
