@@ -43,8 +43,7 @@ if ($action == 2) {
     my $last = ($i == ($number_puppets - 1));
     my $droplet_name = userInput("What should the new droplet (number " . $i . ") be called? Only valid hostname characters are allowed. (a-z, A-Z, 0-9, . and -)");
     $droplet_name =~ s/^\s+|\s+$//g;
-    $puppets[$i] = $do->get_by_name("droplets", $droplet_name);
-    #$puppets[$i] = $do->create_droplet($droplet_name, $last);
+    $puppets[$i] = $do->create_droplet($droplet_name, $last);
     print "Created " . $droplet_name . "\n";
   }
 
