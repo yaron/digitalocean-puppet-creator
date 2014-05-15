@@ -1,16 +1,26 @@
 use Local::SSH;
+use Config::Simple;
+
 package Local::Puppet;
 sub new {
   my $class = shift;
   my $droplet = shift;
-  #@TODO Load type of puppets to create from config.
+  my $cfg = new Config::Simple('DigitalOcean.conf');
+  my $puppet_type = $cfg->param("PuppetType");
   
   my $ssh = new Local::SSH($droplet->ip_address);
-  $ssh->install_deb_package("https://apt.puppetlabs.com/puppetlabs-release-" . $ssh->getVersionName() . ".deb");
+
+  if ($puppet_type eq "OpenSource") {
+    $ssh->install_deb_package("https://apt.puppetlabs.com/puppetlabs-release-" . $ssh->getVersionName() . ".deb");
+  }
+  else {
+    #my $filename = $ssh->download(https://pm.puppetlabs.com/cgi-bin/download.cgi?ver=latest&dist=debian&rel=7&arch=amd64);
+  }
   
   my $self = {
     _ssh => $ssh,
     _droplet => $droplet,
+    _puppet_type => $puppet_type,
   };
 
   bless $self, $class;
@@ -19,7 +29,6 @@ sub new {
 sub make_master {
   my $self = shift;
   @TODO master installation
-  #https://pm.puppetlabs.com/cgi-bin/download.cgi?ver=latest&dist=debian&rel=7&arch=amd64
   
   #$self->{_ssh}->install_package("puppetmaster-passenger");
   # install puppet-dashboard

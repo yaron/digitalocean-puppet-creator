@@ -38,17 +38,22 @@ sub getVersionName {
   my $self = shift;
   return $self->{_version_name};
 }
-sub install_deb_package {
-  my( $self, $url ) = @_;
+sub download {
+  my ($self, $url) = @_;
   print "Downloading " . $url . "\n";
   ($out, $err, $exit) = $self->{_connection}->cmd("wget " . $url);
   ($filename) = ($url =~ /([^\/]*?)$/);
+  return $filename;
+}
+sub install_deb_package {
+  my ($self, $url) = @_;
+  my $filename = $self->download($url);
   $self->{_connection}->cmd("dpkg -i " . $filename);
   $self->{_connection}->cmd("apt-get update " . $filename);
   return $exit;
 }
 sub install_package {
-  my( $self, $package ) = @_;
+  my ($self, $package) = @_;
   print "Installing " . $package . "\n";
   $self->{_connection}->cmd("apt-get install -y " . $package);
 }
